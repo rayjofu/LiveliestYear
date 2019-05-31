@@ -9,107 +9,119 @@ namespace Rextester
 {
     public class Program
     {
-        public int getMostCommonYear (List<DateTime> dates)
+        public class Person
         {
-            if (dates.Count == 0)
+            public Person(int birthYear, int endYear)
+            {
+                this.birthYear = birthYear;
+                this.endYear = endYear;
+            }
+            
+            public int birthYear;
+            public int endYear;
+        }
+        
+        public int getLiveliestYear (List<Person> persons)
+        {
+            if (persons.Count == 0)
             {
                 return -1;
             }
             
-            Dictionary<int, int> counter = new Dictionary<int, int>(dates.Count);
-            int year = dates[0].Year;
+            Dictionary<int, int> counter = new Dictionary<int, int>(persons.Count);
+            int liveliestYear = persons[0].birthYear;
             
-            foreach (DateTime date in dates)
+            foreach (Person person in persons)
             {
-                bool hasYear = counter.ContainsKey(date.Year);
-                int count = hasYear ? counter[date.Year] + 1 : 1;
+                int birthYear = person.birthYear;
+                int endYear = person.endYear;
                 
-                counter[date.Year] = count;
-                
-                int largestCount = counter[year];
-                
-                year = count > largestCount ? date.Year : year;
+                for (int year = birthYear; year <= endYear; ++year)
+                {
+                    bool hasYear = counter.ContainsKey(year);
+                    int count = hasYear ? counter[year] + 1 : 1;
+                    
+                    counter[year] = count;
+
+                    int largestCount = counter[liveliestYear];
+
+                    liveliestYear = count > largestCount ? year : liveliestYear;
+                }
             }
             
-            return year;
+            return liveliestYear;
         }
         
-        public List<DateTime> generateDates (int count, DateTime startDate, DateTime endDate)
+        public List<Person> generatePersons (int count, int startYear, int finishYear)
         {
-            List<DateTime> dates = new List<DateTime>(count);
+            List<Person> persons = new List<Person>(count);
             Random rand = new Random();
-            int deltaDays = (endDate - startDate).Days;
+            int birthOffset = finishYear - startYear;
             
             for (int i = 0; i < count; ++i)
             {
-                int days = rand.Next(deltaDays);
-                dates.Add(startDate.AddDays(days));
-            }
+                int birthYear = startYear + rand.Next(birthOffset);
+                int endOffset = finishYear - birthYear;
+                int endYear = birthYear + rand.Next(endOffset);
+                
+                persons.Add(new Person(birthYear, endYear));
+            } 
             
-            return dates;
+            return persons;
         }
         
-        public void printDates (List<DateTime> dates)
+        public void printTimeline (List<Person> persons, int startYear, int finishYear)
         {
-            foreach (DateTime date in dates)
+            foreach (Person person in persons)
             {
-                Console.WriteLine(date);
+                int birthYear = person.birthYear;
+                int endYear = person.endYear;
+                
+                for (int year = startYear; year <= finishYear; ++year)
+                {
+                    if (year < birthYear)
+                    {
+                        Console.Write("         ");
+                    }
+                    else if (year >= birthYear && year < endYear)
+                    {
+                        Console.Write(year + " --> ");
+                    }
+                    else if (year == endYear)
+                    {
+                        Console.WriteLine(endYear);
+                    }
+                }
             }
         }
         
         public void test ()
         {
-            List<DateTime> data1 = new[]
+            List<Person> data = new[]
             {
-                new DateTime(1990, 1, 1),
-                new DateTime(1990, 1, 1),
-                new DateTime(1991, 1, 1),
-                new DateTime(1991, 1, 1),
-                new DateTime(1991, 1, 1)
+                new Person(1990, 1991),
+                new Person(1990, 1991),
+                new Person(1990, 1991),
+                new Person(1990, 1991)
             }.ToList();
             
-            bool test1 = getMostCommonYear(data1) == 1991;
-            Console.WriteLine(test1);
-            
-            List<DateTime> data2 = new[]
-            {
-                new DateTime(1990, 1, 1),
-                new DateTime(1990, 1, 1),
-                new DateTime(1990, 1, 1),
-                new DateTime(1991, 1, 1),
-                new DateTime(1991, 1, 1)
-            }.ToList();
-            
-            bool test2 = getMostCommonYear(data2) == 1990;
-            Console.WriteLine(test2);
-            
-            List<DateTime> data3 = new[]
-            {
-                new DateTime(1990, 1, 1),
-                new DateTime(1990, 1, 1),
-                new DateTime(1991, 1, 1),
-                new DateTime(1991, 1, 1),
-                new DateTime(1992, 1, 1),
-                new DateTime(1992, 1, 1)
-            }.ToList();
-            
-            bool test3 = getMostCommonYear(data3) == 1990;
-            Console.WriteLine(test3);
+            bool result = getLiveliestYear(data) == 1990;
+            Console.WriteLine(result);
         }
         
         public static void Main(string[] args)
         {
             Program p = new Program();
+            int population = 10;
+            int startYear = 1990;
+            int finishYear = 2000;
+            List<Person> persons = p.generatePersons(population, startYear, finishYear);
             
-            DateTime startDate = new DateTime(1990, 1, 1);
-            DateTime endDate = new DateTime(2000, 1, 1).AddDays(-1);
-            List<DateTime> dates = p.generateDates(10, startDate, endDate);
+            p.printTimeline(persons, startYear, finishYear);
             
-            p.printDates(dates);
+            int liveliestYear = p.getLiveliestYear(persons);
             
-            int year = p.getMostCommonYear(dates);
-            
-            Console.WriteLine(year);
+            Console.WriteLine("Liveliest Year = " + liveliestYear);
         }
     }
 }
